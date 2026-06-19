@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { MapPin, MessageSquare, Zap } from 'lucide-react';
+import { MapPin, MessageSquare, Zap, ThumbsUp, Eye, Share2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatNumber } from '@/utils/formatters';
-import { URGENCY_LEVELS } from '@/data/dictionaries';
+import { URGENCY_LEVELS, PLATFORMS } from '@/data/dictionaries';
 import type { Cluster as StoreCluster } from '@/types';
 import type { Cluster as MockCluster } from '@/data/mockClusters';
 
@@ -69,6 +69,9 @@ function getSpreadSpeed(cluster: Cluster): number {
 }
 
 function getStreets(cluster: Cluster): string[] {
+  if ('districts' in cluster && cluster.districts?.length) {
+    return cluster.districts;
+  }
   if ('streets' in cluster && cluster.streets?.length) {
     return cluster.streets;
   }
@@ -78,13 +81,27 @@ function getStreets(cluster: Cluster): string[] {
   return [];
 }
 
-function getSummary(cluster: Cluster): string {
-  if ('representativePost' in cluster && cluster.representativePost) {
-    const post = cluster.representativePost;
-    if ('summary' in post) return post.summary;
-    if ('content' in post) return post.content;
+function getRepresentativePost(
+  cluster: Cluster
+): { title: string; summary: string; interactions: number; platform: string } | null {
+  type RepPostT = { title?: string; summary?: string; content?: string; interactions?: number; platform?: string };
+  let post: RepPostT | undefined;
+  if ('representativePosts' in cluster && Array.isArray(cluster.representativePosts) && cluster.representativePosts.length > 0) {
+    post = cluster.representativePosts[0] as RepPostT;
+  } else if ('representativePost' in cluster && cluster.representativePost) {
+    post = cluster.representativePost as RepPostT;
   }
-  return '';
+  if (!post) return null;
+  return {
+    title: post.title || '',
+    summary: post.summary || post.content || '',
+    interactions: typeof post.interactions === 'number' ? post.interactions : 0,
+    platform: post.platform || '',
+  };
+}
+
+function getPlatformLabel(value: string): string {
+  return PLATFORMS.find((p) => p.value === value)?.label || value;
 }
 
 function SpreadProgressBar({ value }: { value: number }) {
@@ -133,7 +150,8 @@ export default function ClusterCard({
   const totalCount = getTotalCount(cluster);
   const spreadSpeed = getSpreadSpeed(cluster);
   const streets = getStreets(cluster);
-  const summary = getSummary(cluster);
+  const repPost = getRepresentativePost(cluster);
+  const summary = repPost?.summary || '';
 
   return (
     <div
@@ -214,15 +232,47 @@ export default function ClusterCard({
           </div>
         )}
 
-        {summary && (
+        {repPost && (
           <div className="flex items-start gap-2 p-3 rounded-sm bg-neutral-800/50 border border-neutral-700/50">
             <MessageSquare
               className="w-3.5 h-3.5 text-neutral-500 mt-0.5 flex-shrink-0"
               strokeWidth={2}
             />
-            <p className="text-xs text-neutral-400 leading-relaxed line-clamp-3">
-              {summary}
-            </p>
+            <div className="flex-1 min-w-0 space-y-1.5">
+              {repPost.title && (
+                <p className="text-xs font-medium text-neutral-200 leading-snug line-clamp-1">
+                  {repPost.title}
+                </p>
+              )}
+              <p className="text-xs text-neutral-400 leading-relaxed line-clamp-3">
+                {summary}
+              </p>
+              <div className="flex items-center gap-3 pt-1 text-[11px]">
+                {repPost.platform && (
+                  <span className="inline-flex items-center px-1.5 py-0.5 rounded-sm bg-primary/15 text-primary-light border border-primary/30 font-medium">
+                    {getPlatformLabel(repPost.platform)}
+                  </span>
+                )}
+                {repPost.interactions > 0 && (
+                  <span className="inline-flex items-center gap-1 text-neutral-500">
+                    <ThumbsUp className="w-3 h-3" strokeWidth={2} />
+                    <span className="font-mono-num">{formatNumber(repPost.interactions)}</span>
+                  </span>
+                )}
+                {repPost.interactions > 0 && (
+                  <span className="inline-flex items-center gap-1 text-neutral-500">
+                    <Eye className="w-3 h-3" strokeWidth={2} />
+                    <span className="font-mono-num">{formatNumber(Math.round(repPost.interactions * 5.2))}</span>
+                  </span>
+                )}
+                {repPost.interactions > 100 && (
+                  <span className="inline-flex items-center gap-1 text-neutral-500">
+                    <Share2 className="w-3 h-3" strokeWidth={2} />
+                    <span className="font-mono-num">{formatNumber(Math.round(repPost.interactions * 0.15))}</span>
+                  </span>
+                )}
+              </div>
+            </div>
           </div>
         )}
       </div>

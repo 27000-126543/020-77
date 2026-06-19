@@ -44,7 +44,7 @@ function mapTrend(trend: string): 'rising' | 'stable' | 'declining' {
 }
 
 function getDepartmentName(id: string): string {
-  return DEPARTMENTS.find((d) => d.id === id)?.name || id;
+  return DEPARTMENTS.find((d) => d.value === id)?.label || id;
 }
 
 export default function AnalysisPage() {
@@ -60,6 +60,7 @@ export default function AnalysisPage() {
     saveDraft,
     submitRecord,
     records,
+    generateDailySummary,
   } = useAnalysisStore();
 
   const [selectedThemeIds, setSelectedThemeIds] = useState<string[]>([]);
@@ -203,7 +204,10 @@ export default function AnalysisPage() {
       suggestion: values.disposalSuggestion,
     });
     saveDraft();
-    setTimeout(() => setIsSaving(false), 500);
+    setTimeout(() => {
+      generateDailySummary(clusters);
+      setIsSaving(false);
+    }, 500);
   };
 
   const handleSubmit = async (values: AnalysisFormValues) => {
@@ -212,11 +216,12 @@ export default function AnalysisPage() {
     handleSave(values);
     setTimeout(() => {
       const draft = records.find(
-        (r) => r.clusterId === selectedTheme.id && r.status === 'draft'
+        (r) => r.clusterId === selectedTheme.id && r.status === 'submitted'
       );
       if (draft) {
         submitRecord(draft.id);
       }
+      generateDailySummary(clusters);
       setIsSubmitting(false);
     }, 800);
   };

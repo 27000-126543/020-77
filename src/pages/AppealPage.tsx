@@ -29,7 +29,7 @@ export default function AppealPage() {
 
       if (selectedRegions.length > 0) {
         const inRegion = selectedRegions.some(
-          (r) => appeal.region.includes(r) || appeal.district.includes(r)
+          (r) => r === appeal.region || r === appeal.district
         );
         if (!inRegion) return false;
       }

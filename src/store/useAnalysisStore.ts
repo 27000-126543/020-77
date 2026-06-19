@@ -1,26 +1,16 @@
 import { create } from 'zustand';
+import { DEPARTMENTS, DEPT_SHORT_NAMES } from '@/data/dictionaries';
 import type { Urgency } from '../utils/formatters';
+import type { Cluster } from './useClusterStore';
 
-export interface Department {
+export { DEPARTMENTS };
+
+export interface DepartmentInfo {
   id: string;
   name: string;
+  shortName: string;
   category: string;
 }
-
-export const DEPARTMENTS: Department[] = [
-  { id: 'd001', name: '住建局', category: '城乡建设' },
-  { id: 'd002', name: '城管委', category: '城市管理' },
-  { id: 'd003', name: '交通委', category: '交通运输' },
-  { id: 'd004', name: '教委', category: '教育体育' },
-  { id: 'd005', name: '卫健委', category: '卫生健康' },
-  { id: 'd006', name: '民政局', category: '民政民生' },
-  { id: 'd007', name: '环保局', category: '生态环境' },
-  { id: 'd008', name: '市场监管局', category: '市场监管' },
-  { id: 'd009', name: '公安局', category: '公共安全' },
-  { id: 'd010', name: '水务局', category: '水利水务' },
-  { id: 'd011', name: '园林绿化局', category: '园林绿化' },
-  { id: 'd012', name: '人力社保局', category: '人力资源' },
-];
 
 export const CALIBER_TEMPLATES = [
   {
@@ -79,17 +69,19 @@ export interface DailySummary {
   }>;
   responsibilities: Array<{
     department: string;
+    departmentId: string;
     clusters: string[];
   }>;
   calibers: Array<{
     clusterName: string;
+    clusterId: string;
     caliber: string;
   }>;
   remarks: string;
 }
 
-function daysAgo(days: number, hours: number = 0): string {
-  return new Date(Date.now() - days * 24 * 60 * 60 * 1000 - hours * 60 * 60 * 1000).toISOString();
+function hoursAgo(h: number): string {
+  return new Date(Date.now() - h * 60 * 60 * 1000).toISOString();
 }
 
 const mockAnalysisRecords: AnalysisRecord[] = [
@@ -98,14 +90,14 @@ const mockAnalysisRecords: AnalysisRecord[] = [
     clusterId: 'c001',
     clusterName: '供暖不达标问题',
     urgency: 'critical',
-    departments: ['d001', 'd002'],
+    departments: ['dept_08', 'dept_04', 'dept_02'],
     caliber:
       '针对近期部分市民反映的供暖温度不达标问题，市住建局联合城管委已成立专项工作组，对全市供热企业开展拉网式排查。对排查中发现的问题，责令企业24小时内整改到位，整改不力的将依法依规严肃处理。市民如有供暖问题，可拨打12345热线，我们将第一时间响应处置。',
     suggestion:
       '1. 住建局牵头，要求各供热企业提交整改方案并限期落实；\n2. 对涉事小区逐户测温，建立温度台账；\n3. 12345热线增派坐席，专项受理供暖诉求；\n4. 约谈XX供热公司主要负责人，启动应急供热预案。',
     assignedBy: '张值班长',
-    assignedAt: daysAgo(0, 4),
-    updatedAt: daysAgo(0, 1),
+    assignedAt: hoursAgo(4),
+    updatedAt: hoursAgo(1),
     status: 'submitted',
     priority: 1,
   },
@@ -114,14 +106,14 @@ const mockAnalysisRecords: AnalysisRecord[] = [
     clusterId: 'c008',
     clusterName: '医院挂号难问题',
     urgency: 'critical',
-    departments: ['d005', 'd009'],
+    departments: ['dept_10', 'dept_03'],
     caliber:
       '关于部分医院挂号难的问题，市卫健委已启动新一轮号源扩容工作，要求各三甲医院专家号源在现有基础上增加20%，同时严厉打击号贩子倒号行为。市公安局已组织专项行动，在重点医院周边开展巡查整治。建议市民优先通过官方APP预约挂号，共同维护良好就医秩序。',
     suggestion:
       '1. 卫健委督促各医院优化号源分配，向普通号倾斜；\n2. 公安局在重点医院部署便衣警力，严打黄牛倒号；\n3. 推进电子健康码互通，减少排队时间；\n4. 加强社区医院首诊制度引导。',
     assignedBy: '张值班长',
-    assignedAt: daysAgo(0, 5),
-    updatedAt: daysAgo(0, 2),
+    assignedAt: hoursAgo(5),
+    updatedAt: hoursAgo(2),
     status: 'submitted',
     priority: 2,
   },
@@ -130,14 +122,14 @@ const mockAnalysisRecords: AnalysisRecord[] = [
     clusterId: 'c003',
     clusterName: '广场舞噪音扰民',
     urgency: 'urgent',
-    departments: ['d009', 'd002', 'd011'],
+    departments: ['dept_03', 'dept_04', 'dept_12'],
     caliber:
       '针对广场舞噪音扰民问题，多部门将联合开展专项整治：一是合理划定公园广场活动区域，设定噪音限值和活动时段；二是为广场舞队伍配发定向音箱，降低噪音外溢；三是加强社区劝导，引导市民文明健身，兼顾他人休息权益。',
     suggestion:
-      '1. 城管委联合公安开展噪音监测专项行动；\n2. 园林绿化局在公园内划定专门活动区；\n3. 试点推广定向音响设备，由街道统一采购配发；\n4. 社区建立广场舞自治公约。',
+      '1. 城管委联合公安开展噪音监测专项行动；\n2. 园林绿化部门在公园内划定专门活动区；\n3. 试点推广定向音响设备，由街道统一采购配发；\n4. 社区建立广场舞自治公约。',
     assignedBy: '李副值班长',
-    assignedAt: daysAgo(1, 3),
-    updatedAt: daysAgo(0, 6),
+    assignedAt: hoursAgo(27),
+    updatedAt: hoursAgo(6),
     status: 'approved',
     priority: 3,
   },
@@ -146,14 +138,14 @@ const mockAnalysisRecords: AnalysisRecord[] = [
     clusterId: 'c004',
     clusterName: '学区划片争议',
     urgency: 'urgent',
-    departments: ['d004'],
+    departments: ['dept_11'],
     caliber:
       '关于义务教育阶段学区划片问题，市教委严格按照"就近入学"原则，综合考虑学校布局、学位供给、人口分布等因素科学划定。对今年划片调整的区域，教委已组织多场政策说明会，确保家长知情权。如仍有疑问，可到区教委招生办现场咨询。',
     suggestion:
       '1. 教委发布详细划片说明及政策依据；\n2. 各涉及区教委开设政策咨询专窗；\n3. 提前公示明年学位预警信息；\n4. 研究集团化办学扩容方案。',
     assignedBy: '李副值班长',
-    assignedAt: daysAgo(1, 6),
-    updatedAt: daysAgo(1, 2),
+    assignedAt: hoursAgo(30),
+    updatedAt: hoursAgo(26),
     status: 'dispatched',
     priority: 4,
   },
@@ -162,14 +154,14 @@ const mockAnalysisRecords: AnalysisRecord[] = [
     clusterId: 'c002',
     clusterName: '路面积水排水不畅',
     urgency: 'urgent',
-    departments: ['d002', 'd001', 'd010'],
+    departments: ['dept_04', 'dept_08'],
     caliber:
       '针对汛期部分路段积水问题，市城管委已启动排水管网清淤专项工程，对全市易积水点逐一建立台账，汛期前完成全部清淤疏通工作。同时完善积水监测预警系统，遇强降雨时第一时间发布预警信息，保障市民出行安全。',
     suggestion:
       '1. 城管委牵头完成排水管网清淤；\n2. 水务局对易积水路段增设排水泵站；\n3. 在积水点设置警示标志；\n4. 建立汛期巡查值守机制。',
     assignedBy: '王研判员',
-    assignedAt: daysAgo(2, 2),
-    updatedAt: daysAgo(1, 8),
+    assignedAt: hoursAgo(50),
+    updatedAt: hoursAgo(32),
     status: 'dispatched',
     priority: 5,
   },
@@ -178,14 +170,14 @@ const mockAnalysisRecords: AnalysisRecord[] = [
     clusterId: 'c005',
     clusterName: '地铁站外黑车运营',
     urgency: 'normal',
-    departments: ['d003', 'd009'],
+    departments: ['dept_09', 'dept_03'],
     caliber:
       '针对地铁站外黑车非法运营问题，交通执法部门已持续开展"打非治违"专项行动。通过增设监控探头、安排便衣蹲守、加大处罚力度等措施，黑车运营现象已明显减少。市民如遇黑车揽客，可保存证据并拨打交通服务监督电话举报。',
     suggestion:
       '1. 交通执法总队加密重点地铁站执法频次；\n2. 优化地铁口公交线路接驳，减少黑车生存空间；\n3. 联合公安开展非法营运车辆集中查处；\n4. 在地铁口设置正规网约车候客区。',
     assignedBy: '王研判员',
-    assignedAt: daysAgo(2, 8),
-    updatedAt: daysAgo(2, 3),
+    assignedAt: hoursAgo(56),
+    updatedAt: hoursAgo(51),
     status: 'dispatched',
     priority: 6,
   },
@@ -194,86 +186,105 @@ const mockAnalysisRecords: AnalysisRecord[] = [
     clusterId: 'c007',
     clusterName: '市政设施损坏',
     urgency: 'attention',
-    departments: ['d002'],
+    departments: ['dept_04'],
     caliber:
       '感谢市民对市政设施的关注与监督。我委已建立市政设施巡查抢修快速响应机制，接到报修后城区4小时内到场处置，郊区8小时内到场。市民发现路灯、井盖等设施损坏，可通过12345热线或城市管理APP上报，我们将第一时间处理。',
     suggestion:
       '1. 城管委建立市政设施网格化巡查制度；\n2. 对全市路灯进行一次全面检修；\n3. 在易损坏路段增设警示标识；\n4. 推广市民上报奖励机制。',
     assignedBy: '王研判员',
-    assignedAt: daysAgo(3, 4),
-    updatedAt: daysAgo(2, 10),
+    assignedAt: hoursAgo(76),
+    updatedAt: hoursAgo(58),
     status: 'dispatched',
     priority: 7,
   },
 ];
 
-const mockDailySummary: DailySummary = {
-  id: 'ds001',
-  date: new Date().toISOString().split('T')[0],
-  generatedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-  generatedBy: '张值班长',
-  risingTopics: [
-    {
-      clusterId: 'c001',
-      clusterName: '供暖不达标问题',
-      urgency: 'critical',
-      newCount: 36,
-      growthRate: 0.42,
-      departments: ['住建局', '城管委'],
-    },
-    {
-      clusterId: 'c008',
-      clusterName: '医院挂号难问题',
-      urgency: 'critical',
-      newCount: 89,
-      growthRate: 0.38,
-      departments: ['卫健委', '公安局'],
-    },
-    {
-      clusterId: 'c004',
-      clusterName: '学区划片争议',
-      urgency: 'urgent',
-      newCount: 24,
-      growthRate: 0.55,
-      departments: ['教委'],
-    },
-  ],
-  keyAppeals: [
-    {
-      title: 'XX小区供暖温度不达标问题',
-      region: '朝阳区望京街道',
-      sentiment: '负面',
-      summary: '近一周暖气温度仅16度左右，老人孩子已感冒，多次联系未果。',
-    },
-    {
-      title: 'XX医院排队挂号太难了',
-      region: '西城区月坛街道',
-      sentiment: '负面',
-      summary: '凌晨5点排队挂不上专家号，黄牛号源充足但要价翻倍。',
-    },
-  ],
-  responsibilities: [
-    { department: '住建局', clusters: ['供暖不达标问题', '小区违建问题'] },
-    { department: '卫健委', clusters: ['医院挂号难问题'] },
-    { department: '城管委', clusters: ['路面积水排水不畅', '市政设施损坏'] },
-    { department: '公安局', clusters: ['医院挂号难问题', '广场舞噪音扰民', '地铁站外黑车运营'] },
-    { department: '教委', clusters: ['学区划片争议'] },
-  ],
-  calibers: [
-    {
-      clusterName: '供暖不达标问题',
-      caliber:
-        '市住建局联合城管委已成立专项工作组，对全市供热企业开展拉网式排查，24小时内整改到位。',
-    },
-    {
-      clusterName: '医院挂号难问题',
-      caliber:
-        '市卫健委要求各三甲医院专家号源增加20%，公安局严打号贩子，建议市民通过官方APP预约。',
-    },
-  ],
-  remarks:
-    '今日整体舆情态势平稳，供暖和医疗两类民生话题升温明显，建议各相关部门加快处置节奏，及时回应社会关切。早会重点汇报TOP3议题及责任分工。',
-};
+function buildResponsibilities(records: AnalysisRecord[]): DailySummary['responsibilities'] {
+  const map = new Map<string, { deptId: string; clusters: string[] }>();
+  records
+    .filter((r) => r.status !== 'draft' && r.departments.length > 0)
+    .forEach((r) => {
+      r.departments.forEach((deptId) => {
+        if (!map.has(deptId)) {
+          map.set(deptId, { deptId, clusters: [] });
+        }
+        map.get(deptId)!.clusters.push(r.clusterName);
+      });
+    });
+  return Array.from(map.entries()).map(([deptId, info]) => ({
+    departmentId: deptId,
+    department: DEPT_SHORT_NAMES[deptId] || deptId,
+    clusters: info.clusters,
+  }));
+}
+
+function buildRisingTopics(
+  records: AnalysisRecord[],
+  clusters: Cluster[]
+): DailySummary['risingTopics'] {
+  return records
+    .filter((r) => ['submitted', 'approved'].includes(r.status))
+    .slice(0, 3)
+    .map((r) => {
+      const cluster = clusters.find((c) => c.id === r.clusterId);
+      return {
+        clusterId: r.clusterId,
+        clusterName: r.clusterName,
+        urgency: r.urgency,
+        newCount: cluster?.newCount || Math.floor(Math.random() * 90 + 10),
+        growthRate: cluster?.growthRate || Math.random() * 0.5 + 0.1,
+        departments: r.departments
+          .map((d) => DEPT_SHORT_NAMES[d] || d)
+          .filter(Boolean),
+      };
+    });
+}
+
+function buildCalibers(records: AnalysisRecord[]): DailySummary['calibers'] {
+  return records
+    .filter((r) => r.caliber && r.caliber.trim().length > 0 && r.status !== 'draft')
+    .map((r) => ({
+      clusterName: r.clusterName,
+      clusterId: r.clusterId,
+      caliber: r.caliber,
+    }))
+    .slice(0, 6);
+}
+
+function buildKeyAppeals(clusters: Cluster[]): DailySummary['keyAppeals'] {
+  return clusters
+    .filter((c) => c.primarySentiment === 'negative')
+    .slice(0, 4)
+    .map((c) => ({
+      title: c.representativePosts[0]?.title || c.name,
+      region: c.regions.join('、'),
+      sentiment:
+        c.primarySentiment === 'positive'
+          ? '正面'
+          : c.primarySentiment === 'negative'
+            ? '负面'
+            : '中性',
+      summary: c.representativePosts[0]?.content?.slice(0, 80) || c.name,
+    }));
+}
+
+function buildMockDailySummary(
+  records: AnalysisRecord[],
+  clusters: Cluster[]
+): DailySummary {
+  return {
+    id: `ds${Date.now()}`,
+    date: new Date().toISOString().split('T')[0],
+    generatedAt: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+    generatedBy: '张值班长',
+    risingTopics: buildRisingTopics(records, clusters),
+    keyAppeals: buildKeyAppeals(clusters),
+    responsibilities: buildResponsibilities(records),
+    calibers: buildCalibers(records),
+    remarks:
+      '今日整体舆情态势平稳，供暖和医疗两类民生话题升温明显，建议各相关部门加快处置节奏，及时回应社会关切。早会重点汇报TOP3议题及责任分工。',
+  };
+}
 
 interface AnalysisState {
   records: AnalysisRecord[];
@@ -298,7 +309,7 @@ interface AnalysisActions {
   dispatchRecord: (id: string) => void;
   updateRecord: (id: string, updates: Partial<AnalysisRecord>) => void;
   reorderRecords: (orderedIds: string[]) => void;
-  generateDailySummary: () => void;
+  generateDailySummary: (clusters: Cluster[]) => void;
   openSummaryModal: () => void;
   closeSummaryModal: () => void;
   setSortBy: (sortBy: AnalysisState['sortBy']) => void;
@@ -307,10 +318,17 @@ interface AnalysisActions {
   getPendingAnalysisCount: () => number;
 }
 
+const urgencyOrder: Record<Urgency, number> = {
+  critical: 4,
+  urgent: 3,
+  normal: 2,
+  attention: 1,
+};
+
 export const useAnalysisStore = create<AnalysisState & AnalysisActions>((set, get) => ({
   records: mockAnalysisRecords,
   selectedRecordId: null,
-  dailySummary: mockDailySummary,
+  dailySummary: buildMockDailySummary(mockAnalysisRecords, []),
   isSummaryModalOpen: false,
   draftRecord: null,
   sortBy: 'priority',
@@ -347,64 +365,117 @@ export const useAnalysisStore = create<AnalysisState & AnalysisActions>((set, ge
     })),
 
   saveDraft: () => {
-    const draft = get().draftRecord;
-    if (!draft) return;
-    const newRecord: AnalysisRecord = {
-      id: `an${Date.now()}`,
-      clusterId: draft.clusterId!,
-      clusterName: draft.clusterName!,
-      urgency: draft.urgency || 'normal',
-      departments: draft.departments || [],
-      caliber: draft.caliber || '',
-      suggestion: draft.suggestion || '',
-      assignedBy: '当前值班员',
-      assignedAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      status: draft.status || 'draft',
-      priority: draft.priority || get().records.length + 1,
-    };
+    const { draftRecord, records } = get();
+    if (!draftRecord || !draftRecord.clusterId) return;
+
+    let newRecords: AnalysisRecord[];
+    let newRecordId: string;
+    const now = new Date().toISOString();
+
+    const existingIdx = records.findIndex((r) => r.clusterId === draftRecord.clusterId);
+    if (existingIdx >= 0) {
+      const existing = records[existingIdx];
+      const updated: AnalysisRecord = {
+        ...existing,
+        urgency: draftRecord.urgency || existing.urgency,
+        departments: draftRecord.departments || existing.departments,
+        caliber: draftRecord.caliber ?? existing.caliber,
+        suggestion: draftRecord.suggestion ?? existing.suggestion,
+        status: draftRecord.status === 'draft' ? 'draft' : existing.status,
+        updatedAt: now,
+      };
+      newRecords = [...records];
+      newRecords[existingIdx] = updated;
+      newRecordId = updated.id;
+    } else {
+      const newRecord: AnalysisRecord = {
+        id: `an${Date.now()}`,
+        clusterId: draftRecord.clusterId!,
+        clusterName: draftRecord.clusterName!,
+        urgency: draftRecord.urgency || 'normal',
+        departments: draftRecord.departments || [],
+        caliber: draftRecord.caliber || '',
+        suggestion: draftRecord.suggestion || '',
+        assignedBy: '当前值班员',
+        assignedAt: now,
+        updatedAt: now,
+        status: draftRecord.status === 'draft' ? 'draft' : 'submitted',
+        priority: draftRecord.priority || records.length + 1,
+      };
+      newRecords = [newRecord, ...records];
+      newRecordId = newRecord.id;
+    }
+
     set((state) => ({
-      records: [newRecord, ...state.records],
+      records: newRecords,
       draftRecord: null,
-      selectedRecordId: newRecord.id,
+      selectedRecordId: newRecordId,
+      dailySummary: buildMockDailySummary(
+        newRecords,
+        state.dailySummary.risingTopics.map(
+          () => ({} as Cluster)
+        ) as unknown as Cluster[]
+      ),
     }));
   },
 
   deleteDraft: () => set({ draftRecord: null }),
 
-  submitRecord: (id) =>
-    set((state) => ({
-      records: state.records.map((r) =>
-        r.id === id
-          ? { ...r, status: 'submitted', updatedAt: new Date().toISOString() }
-          : r
+  submitRecord: (id) => {
+    const updatedRecords = get().records.map((r) =>
+      r.id === id ? { ...r, status: 'submitted' as const, updatedAt: new Date().toISOString() } : r
+    );
+    const state = get();
+    set({
+      records: updatedRecords,
+      dailySummary: buildMockDailySummary(
+        updatedRecords,
+        state.dailySummary.risingTopics.map(() => ({} as Cluster)) as Cluster[]
       ),
-    })),
+    });
+  },
 
-  approveRecord: (id) =>
-    set((state) => ({
-      records: state.records.map((r) =>
-        r.id === id
-          ? { ...r, status: 'approved', updatedAt: new Date().toISOString() }
-          : r
+  approveRecord: (id) => {
+    const updatedRecords = get().records.map((r) =>
+      r.id === id ? { ...r, status: 'approved' as const, updatedAt: new Date().toISOString() } : r
+    );
+    const state = get();
+    set({
+      records: updatedRecords,
+      dailySummary: buildMockDailySummary(
+        updatedRecords,
+        state.dailySummary.risingTopics.map(() => ({} as Cluster)) as Cluster[]
       ),
-    })),
+    });
+  },
 
-  dispatchRecord: (id) =>
-    set((state) => ({
-      records: state.records.map((r) =>
-        r.id === id
-          ? { ...r, status: 'dispatched', updatedAt: new Date().toISOString() }
-          : r
+  dispatchRecord: (id) => {
+    const updatedRecords = get().records.map((r) =>
+      r.id === id ? { ...r, status: 'dispatched' as const, updatedAt: new Date().toISOString() } : r
+    );
+    const state = get();
+    set({
+      records: updatedRecords,
+      dailySummary: buildMockDailySummary(
+        updatedRecords,
+        state.dailySummary.risingTopics.map(() => ({} as Cluster)) as Cluster[]
       ),
-    })),
+    });
+  },
 
-  updateRecord: (id, updates) =>
-    set((state) => ({
-      records: state.records.map((r) =>
-        r.id === id ? { ...r, ...updates, updatedAt: new Date().toISOString() } : r
+  updateRecord: (id, updates) => {
+    const updatedRecords = get().records.map((r) =>
+      r.id === id ? { ...r, ...updates, updatedAt: new Date().toISOString() } : r
+    );
+    const state = get();
+    set({
+      records: updatedRecords,
+      dailySummary: buildMockDailySummary(
+        updatedRecords,
+        state.dailySummary.risingTopics.map(() => ({} as Cluster)) as Cluster[]
       ),
-    })),
+    });
+  },
 
   reorderRecords: (orderedIds) =>
     set((state) => ({
@@ -416,32 +487,21 @@ export const useAnalysisStore = create<AnalysisState & AnalysisActions>((set, ge
         .sort((a, b) => a.priority - b.priority),
     })),
 
-  generateDailySummary: () => {
-    const records = get().records;
-    const rising = records
-      .filter((r) => ['submitted', 'approved'].includes(r.status))
-      .slice(0, 3)
-      .map((r) => ({
-        clusterId: r.clusterId,
-        clusterName: r.clusterName,
-        urgency: r.urgency,
-        newCount: Math.floor(Math.random() * 100),
-        growthRate: Math.random() * 0.6,
-        departments: r.departments
-          .map((d) => DEPARTMENTS.find((dep) => dep.id === d)?.name)
-          .filter(Boolean) as string[],
-      }));
-
+  generateDailySummary: (clusters) => {
+    const { records } = get();
     const summary: DailySummary = {
       id: `ds${Date.now()}`,
       date: new Date().toISOString().split('T')[0],
       generatedAt: new Date().toISOString(),
       generatedBy: '当前值班员',
-      risingTopics: rising,
-      keyAppeals: [],
-      responsibilities: [],
-      calibers: [],
-      remarks: '自动生成摘要，请人工审核后使用。',
+      risingTopics: buildRisingTopics(records, clusters),
+      keyAppeals: buildKeyAppeals(clusters),
+      responsibilities: buildResponsibilities(records),
+      calibers: buildCalibers(records),
+      remarks:
+        records.filter((r) => r.urgency === 'critical' || r.urgency === 'urgent').length > 0
+          ? `当前有 ${records.filter((r) => r.urgency === 'critical').length} 个特急议题、${records.filter((r) => r.urgency === 'urgent').length} 个紧急议题正在处置，建议各责任部门加快响应节奏。`
+          : '今日整体舆情态势平稳，暂无高紧急度议题。请持续关注各平台动态。',
     };
     set({ dailySummary: summary });
   },
@@ -466,13 +526,6 @@ export const useAnalysisStore = create<AnalysisState & AnalysisActions>((set, ge
     if (filterStatus.length > 0) {
       result = result.filter((r) => filterStatus.includes(r.status));
     }
-
-    const urgencyOrder: Record<Urgency, number> = {
-      critical: 4,
-      urgent: 3,
-      normal: 2,
-      attention: 1,
-    };
 
     result.sort((a, b) => {
       switch (sortBy) {

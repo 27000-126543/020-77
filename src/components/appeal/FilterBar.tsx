@@ -23,7 +23,7 @@ const TIME_RANGES = [
   { value: 'custom', label: '自定义' },
 ] as const;
 
-const PLATFORM_ICONS = {
+const PLATFORM_ICONS: Record<string, typeof Phone> = {
   hotline: Phone,
   message: MessageSquare,
   shortvideo: PlayCircle,

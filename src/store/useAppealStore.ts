@@ -3,7 +3,7 @@ import type { Sentiment } from '../utils/formatters';
 
 export interface Appeal {
   id: string;
-  platform: 'hotline' | 'message' | 'video' | 'forum';
+  platform: 'hotline' | 'message' | 'shortvideo' | 'forum';
   title: string;
   content: string;
   summary: string;
@@ -71,7 +71,7 @@ const mockAppeals: Appeal[] = [
   },
   {
     id: 'a003',
-    platform: 'video',
+    platform: 'shortvideo',
     title: '实拍！XX公园广场舞噪音扰民',
     content: '每天早上6点不到，XX公园就开始放高音喇叭跳广场舞，附近居民苦不堪言，多次报警也没效果。家里有备考的学生和上夜班的年轻人，根本没法休息。希望有关部门管管！',
     summary: 'XX公园广场舞早间噪音扰民，影响备考学生和夜班人员休息。',
@@ -124,7 +124,7 @@ const mockAppeals: Appeal[] = [
   },
   {
     id: 'a006',
-    platform: 'video',
+    platform: 'shortvideo',
     title: 'XX地铁站外黑车猖獗运营',
     content: 'XX地铁站B出口每天都有十几辆黑车在拉客，漫天要价，还经常堵在人行道上影响通行。之前反映过但没见改善，希望交通执法部门能加大查处力度，别让黑车影响城市形象。',
     summary: 'XX地铁站B出口黑车拉客、占道运营，建议加大查处力度。',
@@ -211,7 +211,7 @@ const mockAppeals: Appeal[] = [
   },
   {
     id: 'a011',
-    platform: 'video',
+    platform: 'shortvideo',
     title: '好消息！XX公园二期开放了',
     content: '期待已久的XX公园二期终于开放了！湖水清澈、绿树成荫，还有专门的儿童游乐区和健身步道。周末带孩子去玩了一天，环境真不错，感谢政府为老百姓办的实事！',
     summary: '网友盛赞XX公园二期环境优美，感谢市政民生工程。',
@@ -281,7 +281,7 @@ const mockAppeals: Appeal[] = [
   },
   {
     id: 'a015',
-    platform: 'video',
+    platform: 'shortvideo',
     title: 'XX商圈促销打折',
     content: 'XX购物广场年中大促，全场5折起，还有满减和抽奖活动，人超多！需要买东西的朋友赶紧冲！我已经囤了一大堆了哈哈哈～',
     summary: '【商业推广】XX购物广场年中大促信息。',
