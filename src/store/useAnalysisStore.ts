@@ -301,8 +301,10 @@ interface AnalysisActions {
   getRecordByClusterId: (clusterId: string) => AnalysisRecord | undefined;
   selectRecord: (id: string | null) => void;
   createDraft: (clusterId: string, clusterName: string) => void;
+  loadRecordToDraft: (recordId: string) => void;
   updateDraft: (updates: Partial<AnalysisRecord>) => void;
   saveDraft: () => void;
+  submitDraft: () => void;
   deleteDraft: () => void;
   submitRecord: (id: string) => void;
   approveRecord: (id: string) => void;
@@ -359,6 +361,24 @@ export const useAnalysisStore = create<AnalysisState & AnalysisActions>((set, ge
     });
   },
 
+  loadRecordToDraft: (recordId) => {
+    const record = get().records.find((r) => r.id === recordId);
+    if (!record) return;
+    set({
+      draftRecord: {
+        id: record.id,
+        clusterId: record.clusterId,
+        clusterName: record.clusterName,
+        urgency: record.urgency,
+        departments: [...record.departments],
+        caliber: record.caliber,
+        suggestion: record.suggestion,
+        status: record.status,
+        priority: record.priority,
+      },
+    });
+  },
+
   updateDraft: (updates) =>
     set((state) => ({
       draftRecord: state.draftRecord ? { ...state.draftRecord, ...updates } : null,
@@ -378,10 +398,9 @@ export const useAnalysisStore = create<AnalysisState & AnalysisActions>((set, ge
       const updated: AnalysisRecord = {
         ...existing,
         urgency: draftRecord.urgency || existing.urgency,
-        departments: draftRecord.departments || existing.departments,
+        departments: draftRecord.departments ?? existing.departments,
         caliber: draftRecord.caliber ?? existing.caliber,
         suggestion: draftRecord.suggestion ?? existing.suggestion,
-        status: draftRecord.status === 'draft' ? 'draft' : existing.status,
         updatedAt: now,
       };
       newRecords = [...records];
@@ -399,24 +418,67 @@ export const useAnalysisStore = create<AnalysisState & AnalysisActions>((set, ge
         assignedBy: '当前值班员',
         assignedAt: now,
         updatedAt: now,
-        status: draftRecord.status === 'draft' ? 'draft' : 'submitted',
+        status: 'draft',
         priority: draftRecord.priority || records.length + 1,
       };
       newRecords = [newRecord, ...records];
       newRecordId = newRecord.id;
     }
 
-    set((state) => ({
+    set({
       records: newRecords,
       draftRecord: null,
       selectedRecordId: newRecordId,
-      dailySummary: buildMockDailySummary(
-        newRecords,
-        state.dailySummary.risingTopics.map(
-          () => ({} as Cluster)
-        ) as unknown as Cluster[]
-      ),
-    }));
+    });
+  },
+
+  submitDraft: () => {
+    const { draftRecord, records } = get();
+    if (!draftRecord || !draftRecord.clusterId) return;
+
+    let newRecords: AnalysisRecord[];
+    let newRecordId: string;
+    const now = new Date().toISOString();
+
+    const existingIdx = records.findIndex((r) => r.clusterId === draftRecord.clusterId);
+    if (existingIdx >= 0) {
+      const existing = records[existingIdx];
+      const updated: AnalysisRecord = {
+        ...existing,
+        urgency: draftRecord.urgency || existing.urgency,
+        departments: draftRecord.departments ?? existing.departments,
+        caliber: draftRecord.caliber ?? existing.caliber,
+        suggestion: draftRecord.suggestion ?? existing.suggestion,
+        status: 'submitted',
+        updatedAt: now,
+      };
+      newRecords = [...records];
+      newRecords[existingIdx] = updated;
+      newRecordId = updated.id;
+    } else {
+      const newRecord: AnalysisRecord = {
+        id: `an${Date.now()}`,
+        clusterId: draftRecord.clusterId!,
+        clusterName: draftRecord.clusterName!,
+        urgency: draftRecord.urgency || 'normal',
+        departments: draftRecord.departments || [],
+        caliber: draftRecord.caliber || '',
+        suggestion: draftRecord.suggestion || '',
+        assignedBy: '当前值班员',
+        assignedAt: now,
+        updatedAt: now,
+        status: 'submitted',
+        priority: draftRecord.priority || records.length + 1,
+      };
+      newRecords = [newRecord, ...records];
+      newRecordId = newRecord.id;
+    }
+
+    set({
+      records: newRecords,
+      draftRecord: null,
+      selectedRecordId: newRecordId,
+    });
   },
 
   deleteDraft: () => set({ draftRecord: null }),

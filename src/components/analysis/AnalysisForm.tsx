@@ -63,17 +63,24 @@ export default function AnalysisForm({
   const [isCaliberFocused, setIsCaliberFocused] = useState(false)
   const [caliberLength, setCaliberLength] = useState(0)
 
-  useEffect(() => {
-    if (caliberRef.current && values.suggestedCaliber) {
-      if (caliberRef.current.innerHTML !== values.suggestedCaliber) {
-        caliberRef.current.innerHTML = values.suggestedCaliber
-        setCaliberLength(stripHtml(values.suggestedCaliber).length)
-      }
-    }
-  }, [])
+  const stripHtml = (html: string) => {
+    const tmp = document.createElement('div')
+    tmp.innerHTML = html
+    return tmp.textContent || tmp.innerText || ''
+  }
 
   useEffect(() => {
     setValues((prev) => ({ ...prev, ...initialValues }))
+    if (caliberRef.current && initialValues?.suggestedCaliber !== undefined) {
+      const newHtml = initialValues.suggestedCaliber
+      if (caliberRef.current.innerHTML !== newHtml) {
+        caliberRef.current.innerHTML = newHtml
+        setCaliberLength(stripHtml(newHtml).length)
+      }
+    } else if (caliberRef.current && !initialValues?.suggestedCaliber) {
+      caliberRef.current.innerHTML = ''
+      setCaliberLength(0)
+    }
   }, [initialValues])
 
   const getUrgencyLabel = (level: UrgencyLevel) => {
@@ -82,12 +89,6 @@ export default function AnalysisForm({
 
   const handleInputChange = (field: keyof AnalysisFormValues, value: string | string[] | UrgencyLevel) => {
     setValues((prev) => ({ ...prev, [field]: value }))
-  }
-
-  const stripHtml = (html: string) => {
-    const tmp = document.createElement('div')
-    tmp.innerHTML = html
-    return tmp.textContent || tmp.innerText || ''
   }
 
   const handleCaliberInput = () => {

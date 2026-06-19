@@ -55,10 +55,11 @@ export default function AnalysisPage() {
     selectRecord,
     getRecordByClusterId,
     createDraft,
+    loadRecordToDraft,
     updateDraft,
     draftRecord,
     saveDraft,
-    submitRecord,
+    submitDraft,
     records,
     generateDailySummary,
   } = useAnalysisStore();
@@ -174,6 +175,7 @@ export default function AnalysisPage() {
       const record = getRecordByClusterId(id);
       if (record) {
         selectRecord(record.id);
+        loadRecordToDraft(record.id);
       } else {
         const cluster = getClusterById(id);
         if (cluster) {
@@ -194,36 +196,42 @@ export default function AnalysisPage() {
   const handleSave = async (values: AnalysisFormValues) => {
     if (!selectedTheme) return;
     setIsSaving(true);
-    const departments = values.assignedDepartments;
     updateDraft({
       clusterId: selectedTheme.id,
       clusterName: values.title,
       urgency: values.urgencyLevel === 'special' ? 'critical' : values.urgencyLevel,
-      departments,
+      departments: values.assignedDepartments,
       caliber: values.suggestedCaliber,
       suggestion: values.disposalSuggestion,
     });
     saveDraft();
     setTimeout(() => {
       generateDailySummary(clusters);
+      loadRecordToDraft(getRecordByClusterId(selectedTheme.id)?.id || '');
       setIsSaving(false);
-    }, 500);
+    }, 300);
   };
 
   const handleSubmit = async (values: AnalysisFormValues) => {
     if (!selectedTheme) return;
     setIsSubmitting(true);
-    handleSave(values);
+    updateDraft({
+      clusterId: selectedTheme.id,
+      clusterName: values.title,
+      urgency: values.urgencyLevel === 'special' ? 'critical' : values.urgencyLevel,
+      departments: values.assignedDepartments,
+      caliber: values.suggestedCaliber,
+      suggestion: values.disposalSuggestion,
+    });
+    submitDraft();
     setTimeout(() => {
-      const draft = records.find(
-        (r) => r.clusterId === selectedTheme.id && r.status === 'submitted'
-      );
-      if (draft) {
-        submitRecord(draft.id);
-      }
       generateDailySummary(clusters);
+      const record = getRecordByClusterId(selectedTheme.id);
+      if (record) {
+        loadRecordToDraft(record.id);
+      }
       setIsSubmitting(false);
-    }, 800);
+    }, 400);
   };
 
   const urgencyInfo = URGENCY_LEVELS.find(
